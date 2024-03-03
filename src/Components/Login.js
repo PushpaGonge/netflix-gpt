@@ -1,13 +1,18 @@
 import { useState,useRef } from "react";
 import Header from "./Header";
 import { checkValidateData } from "../utils/Validate";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword ,updateProfile } from "firebase/auth";
 import {auth} from "../utils/Firebase" 
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
 
 const Login = () => {
     const [Issigninform ,setIssignform] = useState(true)
     const [errormessage,seterrormessage] = useState(null)
-
+    const navigate = useNavigate()
+    const dispatch = useDispatch()
+    const name = useRef(null)
     const email = useRef(null);
     const password = useRef(null);
     
@@ -29,13 +34,25 @@ const Login = () => {
   .then((userCredential) => {
     // Signed up 
     const user = userCredential.user;
-    console.log(user)
+    updateProfile(user, {
+  displayName:name.current.value , 
+  photoURL: "https://images.rawpixel.com/image_png_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA0L3BmLWljb240LWppcjIwNjItcG9yLWwtam9iNzg4LnBuZw.png"
+}).then(() => {
+  const {uid, email ,displayName, photoURL} = auth.currentUser;
+     dispatch(addUser({uid:uid , email:email , displayName:displayName, photoURL:photoURL}));
+  navigate("/browse")
+  // ...
+}).catch((error) => {
+   seterrormessage(error.message);
+});
+    
     // ...
   })
   .catch((error) => {
     const errorCode = error.code;
     const errorMessage = error.message;
     seterrormessage(errorCode + "-" + errorMessage)
+    
     // ..
   });
 
@@ -46,6 +63,7 @@ const Login = () => {
     // Signed in 
     const user = userCredential.user;
     console.log(user)
+    navigate("/browse")
     // ...
   })
   .catch((error) => {
@@ -67,7 +85,7 @@ const Login = () => {
              <h1 className="text-white  text-3xl  mx-20 my-2">{Issigninform ? "SignIn" : "SignUp"}</h1>
             
             {!Issigninform && (
-                <input type="text" placeholder="Full Name" className="p-2 my-2 w-full rounded-lg "/>
+                <input ref={name} type="text" placeholder="Full Name" className="p-2 my-2 w-full rounded-lg "/>
                 
             )}
             
